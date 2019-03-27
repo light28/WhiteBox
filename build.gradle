@@ -1,0 +1,161 @@
+buildscript {
+    ext {
+        springBootVersion = '2.1.2.RELEASE'
+        cucumberVersion = '4.1.2'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+
+apply plugin: 'application'
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+group = 'com.epam.lab.accounts'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    integrationTest {
+        java {
+            // So that we can compile against the business classes (GreeterService, ...):
+            compileClasspath += main.output
+            // So that we can compile against the libs used by the business classes:
+            compileClasspath += main.compileClasspath
+            // So that we can compile against the libs used by the business classes:
+            compileClasspath += main.runtimeClasspath
+
+            // So that we can compile against the unit test classes (custom utilities fx):
+            compileClasspath += test.output
+            // So that we can compile against the libs used by the unit test classes (JUnit, Spring test support, ...):
+            compileClasspath += test.compileClasspath
+
+            // So that test- and business classes can be used at runtime:
+            runtimeClasspath += test.runtimeClasspath
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+    e2eTest {
+        java {
+
+            // So that we can compile against the business classes (GreeterService, ...):
+            compileClasspath += main.output
+            // So that we can compile against the libs used by the business classes:
+            compileClasspath += main.compileClasspath
+            // So that we can compile against the libs used by the business classes:
+            compileClasspath += main.runtimeClasspath
+
+            // So that we can compile against the unit test classes (custom utilities fx):
+            compileClasspath += test.output
+            // So that we can compile against the libs used by the unit test classes (JUnit, Spring test support, ...):
+            compileClasspath += test.compileClasspath
+
+            // So that test- and business classes can be used at runtime:
+            runtimeClasspath += test.runtimeClasspath
+
+            // So that we can compile against the unit test classes (custom utilities fx):
+            compileClasspath += integrationTest.output
+            // So that we can compile against the libs used by the unit test classes (JUnit, Spring test support, ...):
+            compileClasspath += integrationTest.compileClasspath
+
+            // So that test- and business classes can be used at runtime:
+            runtimeClasspath += integrationTest.runtimeClasspath
+            srcDir file('src/e2e-test/java')
+        }
+        resources.srcDir file('src/e2e-test/resources')
+    }
+}
+
+task integrationTest(type: Test) {
+    maxParallelForks = 2
+    dependsOn('test')
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+}
+
+task e2e(type: Test) {
+    maxParallelForks = 5
+    systemProperties System.properties
+    dependsOn('integrationTest')
+    testClassesDirs = sourceSets.e2eTest.output.classesDirs
+    classpath = sourceSets.e2eTest.runtimeClasspath
+}
+
+test {
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+integrationTest {
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+e2e {
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+    e2eTestConpile.extendsFrom integrationTestCompile
+    e2eTestConpile.extendsFrom integrationTestRuntime
+}
+
+dependencies {
+
+    // https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-jasper
+    compile group: 'org.apache.tomcat.embed', name: 'tomcat-embed-jasper', version: '9.0.14'
+    // https://mvnrepository.com/artifact/org.eclipse.jdt.core.compiler/ecj
+    compile group: 'org.eclipse.jdt.core.compiler', name: 'ecj', version: '4.6.1'
+    // https://mvnrepository.com/artifact/javax.servlet/jstl
+    compile group: 'javax.servlet', name: 'jstl', version: '1.2'
+    // https://mvnrepository.com/artifact/org.webjars/bootstrap
+    compile group: 'org.webjars', name: 'bootstrap', version: '4.2.1'
+    // https://mvnrepository.com/artifact/mysql/mysql-connector-java
+    compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.13'
+    // https://mvnrepository.com/artifact/com.google.guava/guava
+    compile group: 'com.google.guava', name: 'guava', version: '27.0.1-jre'
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    // https://mvnrepository.com/artifact/org.webjars/jquery
+    compile group: 'org.webjars', name: 'jquery', version: '3.3.1-1'
+    // https://mvnrepository.com/artifact/commons-validator/commons-validator
+    compile group: 'commons-validator', name: 'commons-validator', version: '1.6'
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.session:spring-session-core'
+    implementation 'org.springframework.boot:spring-boot-starter-tomcat'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'io.cucumber:cucumber-jvm:4.1.0'
+    integrationTestImplementation 'io.cucumber:cucumber-java:4.1.0'
+    integrationTestImplementation 'io.cucumber:cucumber-junit:4.1.0'
+    integrationTestImplementation 'io.cucumber:cucumber-spring:4.1.0'
+
+    e2eTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    e2eTestImplementation 'io.cucumber:cucumber-jvm:4.1.0'
+    e2eTestImplementation 'io.cucumber:cucumber-java:4.1.0'
+    e2eTestImplementation 'io.cucumber:cucumber-junit:4.1.0'
+    e2eTestImplementation 'io.cucumber:cucumber-spring:4.1.0'
+    e2eTestImplementation 'org.seleniumhq.selenium:selenium-java:3.141.59'
+}
