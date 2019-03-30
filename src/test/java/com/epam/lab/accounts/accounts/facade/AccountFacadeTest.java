@@ -54,58 +54,55 @@ public class AccountFacadeTest {
         setField(sessionService, "session", httpSession);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testHandleCreateAccountRequest(){
         // GIVEN
         final CreateUpdateAccountRequest createUpdateRequest = getDefaultCreateRequest();
         final AccountDTO account = getDefaultSessionAccount();
-
-        // WHEN
         when(accountService.isAccountExistsForAccountCode(account.getCode())).thenReturn(false);
 
+        // WHEN
+        accountFacade.handleCreateOrUpdateAccountRequest(createUpdateRequest);
+
         // THEN
-        validator.validate(createUpdateRequest);
         verify(accountService).createAccountForCurrentUser(account);
     }
 
-
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testHandleUpdateAccountRequest(){
         // GIVEN
         final CreateUpdateAccountRequest createUpdateRequest = getDefaultUpdateRequest();
         final AccountDTO account = getDefaultSessionAccount();
+        when(accountService.isAccountExistsForAccountCode(account.getCode())).thenReturn(true);
 
         // WHEN
-        when(accountService.isAccountExistsForAccountCode(account.getCode())).thenReturn(true);
-        //when(accountService.getAccountForAccountCode(createUpdateRequest.getAccountCode())).thenReturn(account);
+        accountFacade.handleCreateOrUpdateAccountRequest(createUpdateRequest);
 
         // THEN
-        accountFacade.handleCreateOrUpdateAccountRequest(createUpdateRequest);
         verify(accountService).updateAccount(account);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testHandleUpdateAccountRequestFailed(){
         // GIVEN
-        //final CreateUpdateAccountRequest createUpdateRequest = getDefaultUpdateRequest();
-       // final AccountDTO account = getDefaultSessionAccount();
+        final CreateUpdateAccountRequest createUpdateRequest = getIllegalCreateRequest();
+        final AccountDTO account = getDefaultSessionAccount();
+        when(accountService.isAccountExistsForAccountCode(account.getCode())).thenReturn(true);
 
         // WHEN
-        //when(accountService.isAccountExistsForAccountCode(account.getCode())).thenReturn(true);
-        //when(accountService.getAccountForAccountCode(createUpdateRequest.getAccountCode())).thenReturn(account);
+        accountFacade.handleCreateOrUpdateAccountRequest(createUpdateRequest);
 
         // THEN
-        //accountFacade.handleCreateOrUpdateAccountRequest(createUpdateRequest);
-        //verify(accountService).updateAccount(account);
+        verify(accountService).updateAccount(account);
     }
 
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testisAccountBelongsToCurrentUser(){
+    @Test
+    public void testIsAccountBelongsToCurrentUser(){
         // GIVEN
         final String acoountCode = getDefaultSessionAccount().getCode();
 
         // WHEN
+        accountFacade.isAccountBelongsToCurrentUser(acoountCode);
 
         // THEN
         verify(accountService).isAccountExistsForAccountCode(acoountCode);
@@ -119,8 +116,8 @@ public class AccountFacadeTest {
         final AccountDTO accountModel = new AccountDTO();
         accountModel.setCode("pharma-group");
         accountModel.setBalance(new BigDecimal(666));
-        accountModel.setImg("LOL");
-        accountModel.setName("Glad Valakas");
+        accountModel.setImg("http://pngimg.com/uploads/adidas/adidas_PNG18.png");
+        accountModel.setName("GladValakas");
         return accountModel;
     }
 
@@ -128,7 +125,7 @@ public class AccountFacadeTest {
         final AccountDTO acoountModel = getDefaultSessionAccount();
         final CreateUpdateAccountRequest createUpdateRequest = new CreateUpdateAccountRequest();
 
-        createUpdateRequest.setAccountBalance(new BigDecimal(500));
+        createUpdateRequest.setAccountBalance(acoountModel.getBalance());
         createUpdateRequest.setAccountCode(acoountModel.getCode());
         createUpdateRequest.setAccountImage(acoountModel.getImg());
         createUpdateRequest.setAccountName(acoountModel.getName());
@@ -141,8 +138,20 @@ public class AccountFacadeTest {
         final CreateUpdateAccountRequest createUpdateRequest = new CreateUpdateAccountRequest();
 
         createUpdateRequest.setAccountBalance(acoountModel.getBalance());
-        createUpdateRequest.setAccountCode("lol");
+        createUpdateRequest.setAccountCode(acoountModel.getCode());
         createUpdateRequest.setAccountImage(acoountModel.getImg());
+        createUpdateRequest.setAccountName(acoountModel.getName());
+
+        return createUpdateRequest;
+    }
+
+    public CreateUpdateAccountRequest getIllegalCreateRequest() {
+        final AccountDTO acoountModel = getDefaultSessionAccount();
+        final CreateUpdateAccountRequest createUpdateRequest = new CreateUpdateAccountRequest();
+
+        createUpdateRequest.setAccountBalance(acoountModel.getBalance());
+        createUpdateRequest.setAccountCode(acoountModel.getCode());
+        createUpdateRequest.setAccountImage("-_-");
         createUpdateRequest.setAccountName(acoountModel.getName());
 
         return createUpdateRequest;
